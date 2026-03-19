@@ -177,7 +177,7 @@ router.get('/matching-requests/:bloodGroup', async (req, res) => {
         const { bloodGroup } = req.params;
         // Find matching requests (case-insensitive)
         const requests = await BloodRequest.find({
-            bloodGroup: { $regex: new RegExp(`^${bloodGroup.replace('+', '\\+')}$`, 'i') },
+            bloodGroup: { $regex: new RegExp(`^${bloodGroup.replace(/\+/g, '\\+')}$`, 'i') },
             status: 'Open'
         }).sort({ createdAt: -1 });
 
@@ -270,8 +270,25 @@ router.delete('/camps/:id/register', async (req, res) => {
 router.post('/request/:id/volunteer', async (req, res) => {
     try {
         const { username } = req.body;
-        const request = await BloodRequest.findById(req.params.id);
+        const [request, donor] = await Promise.all([
+            BloodRequest.findById(req.params.id),
+            Donor.findOne({ username })
+        ]);
+
         if (!request) return res.status(404).json({ error: 'Request not found' });
+        if (!donor) return res.status(404).json({ error: 'Donor profile not found' });
+
+        // Check buffer period (90 days)
+        if (donor.donations && donor.donations.length > 0) {
+            const sortedDonations = [...donor.donations].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const lastDonation = new Date(sortedDonations[0].date);
+            const bufferEnds = new Date(lastDonation.getTime() + 90 * 24 * 60 * 60 * 1000);
+            
+            if (new Date() < bufferEnds) {
+                const daysLeft = Math.ceil((bufferEnds - new Date()) / (1000 * 60 * 60 * 24));
+                return res.status(400).json({ error: `Rest period active. You can donate again in ${daysLeft} days.` });
+            }
+        }
 
         const alreadyVolunteered = request.volunteers.some(v => v.username === username);
         if (alreadyVolunteered) return res.status(400).json({ error: 'You have already volunteered for this request' });

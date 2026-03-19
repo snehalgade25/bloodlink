@@ -16,7 +16,8 @@ const EmergencyRequests = () => {
                 setDonorInfo(donorRes.data);
 
                 // 2. Fetch matching requests
-                const requestsRes = await axios.get(`http://localhost:5000/api/matching-requests/${donorRes.data.bloodGroup}`);
+                const encodedBloodGroup = encodeURIComponent(donorRes.data.bloodGroup);
+                const requestsRes = await axios.get(`http://localhost:5000/api/matching-requests/${encodedBloodGroup}`);
                 setRequests(requestsRes.data);
             } catch (err) {
                 console.error("Error fetching requests:", err);
@@ -29,6 +30,21 @@ const EmergencyRequests = () => {
         const interval = setInterval(fetchDonorAndRequests, 10000);
         return () => clearInterval(interval);
     }, [user.username]);
+
+    // Calculate rest period
+    let isBufferActive = false;
+    let bufferEndDate = null;
+    let daysLeft = 0;
+
+    if (donorInfo && donorInfo.donations && donorInfo.donations.length > 0) {
+        const sorted = [...donorInfo.donations].sort((a,b) => new Date(b.date) - new Date(a.date));
+        const lastDate = new Date(sorted[0].date);
+        bufferEndDate = new Date(lastDate.getTime() + 90 * 24 * 60 * 60 * 1000);
+        if (new Date() < bufferEndDate) {
+            isBufferActive = true;
+            daysLeft = Math.ceil((bufferEndDate - new Date()) / (1000 * 60 * 60 * 24));
+        }
+    }
 
     const handleVolunteer = async (requestId) => {
         try {
@@ -149,11 +165,14 @@ const EmergencyRequests = () => {
                                         </button>
 
                                         <button
-                                            disabled={isVolunteered(request)}
+                                            disabled={isVolunteered(request) || isBufferActive}
                                             onClick={() => handleVolunteer(request._id)}
+                                            title={isBufferActive ? `Rest period active (${daysLeft} days remaining)` : ''}
                                             className={`flex-1 px-8 py-3 font-black rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 active:scale-95 ${
                                                 isVolunteered(request)
                                                     ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                                    : isBufferActive
+                                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200 shadow-none'
                                                     : 'bg-red-600 text-white hover:bg-red-700 shadow-red-100'
                                             }`}
                                         >
@@ -161,6 +180,8 @@ const EmergencyRequests = () => {
                                             <span>
                                                 {isVolunteered(request) 
                                                     ? `Volunteered (${getVolunteerStatus(request)})` 
+                                                    : isBufferActive
+                                                    ? 'Rest Period Active'
                                                     : 'Volunteer to Donate'
                                                 }
                                             </span>

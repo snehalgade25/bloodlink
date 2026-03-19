@@ -16,7 +16,8 @@ import {
     UserPlus,
     UserMinus,
     Hospital,
-    Award
+    Award,
+    AlertTriangle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -32,6 +33,7 @@ const Dashboard = () => {
     const [showLogModal, setShowLogModal] = useState(false);
     const [myRequests, setMyRequests] = useState([]);
     const [requestsLoading, setRequestsLoading] = useState(true);
+    const [matchingRequests, setMatchingRequests] = useState([]);
 
     const user = JSON.parse(localStorage.getItem('user'));
 
@@ -97,12 +99,32 @@ const Dashboard = () => {
 
     const fetchProfile = async () => {
         try {
-            const res = await axios.get(`http://localhost:5000/api/my-profile/${user.username}`);
+            const res = await axios.get(`http://localhost:5000/api/auth/my-profile/${user.username}`);
             setProfile(res.data);
+            
+            // Also fetch matching requests for the dashboard
+            const encodedBloodGroup = encodeURIComponent(res.data.bloodGroup);
+            const matchingRes = await axios.get(`http://localhost:5000/api/matching-requests/${encodedBloodGroup}`);
+            setMatchingRequests(matchingRes.data);
         } catch (err) {
-            console.error('Error fetching profile:', err);
+            console.error('Error fetching profile/requests:', err);
         }
     };
+
+    const handleVolunteer = async (requestId) => {
+        try {
+            await axios.post(`http://localhost:5000/api/request/${requestId}/volunteer`, {
+                username: user.username
+            });
+            showToast('Volunteered successfully!');
+            await fetchProfile(); // Refresh to update status
+        } catch (err) {
+            showToast(err.response?.data?.error || 'Failed to volunteer', 'error');
+        }
+    };
+
+    const isVolunteered = (request) => request.volunteers?.some(v => v.username === user.username);
+    const getVolunteerStatus = (request) => request.volunteers?.find(v => v.username === user.username)?.status;
 
     const fetchCamps = async () => {
         try {
@@ -212,6 +234,58 @@ const Dashboard = () => {
                             </p>
                         </div>
                         <Clock className="w-8 h-8 text-orange-400 opacity-80" />
+                    </div>
+                )}
+
+                {/* Emergency Matching Requests */}
+                {matchingRequests.length > 0 && (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-gray-800 flex items-center space-x-2">
+                                <AlertTriangle className="w-5 h-5 text-red-600 animate-pulse" />
+                                <span>Emergency Needs for {profile?.bloodGroup}</span>
+                            </h2>
+                            <Link to="/emergency-requests" className="text-sm font-black text-red-600 hover:underline">
+                                View Feed
+                            </Link>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {matchingRequests.slice(0, 3).map(request => (
+                                <div key={request._id} className="bg-white border-2 border-red-50 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 w-16 h-16 bg-red-50 rounded-bl-full -mr-4 -mt-4 opacity-50"></div>
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="bg-red-600 text-white p-2 rounded-xl">
+                                            <Droplet className="w-5 h-5 fill-current" />
+                                        </div>
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{new Date(request.createdAt).toLocaleDateString()}</span>
+                                    </div>
+                                    <h3 className="font-black text-gray-800 text-lg mb-1">{request.hospitalName || 'Quick Broadcast'}</h3>
+                                    <p className="text-gray-500 text-xs font-bold mb-4 flex items-center"><MapPin className="w-3 h-3 mr-1" /> {request.location || 'Thane'}</p>
+                                    
+                                    <button
+                                        disabled={isVolunteered(request) || isBufferActive}
+                                        onClick={() => handleVolunteer(request._id)}
+                                        title={isBufferActive ? `Rest period active (${daysLeft} days remaining)` : ''}
+                                        className={`w-full py-3 rounded-xl font-black text-xs flex items-center justify-center space-x-2 transition-all active:scale-95 ${
+                                            isVolunteered(request)
+                                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                                : isBufferActive
+                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                                                : 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-100'
+                                        }`}
+                                    >
+                                        <HeartHandshake className="w-4 h-4" />
+                                        <span>
+                                            {isVolunteered(request) 
+                                                ? `Volunteered (${getVolunteerStatus(request)})` 
+                                                : isBufferActive 
+                                                ? 'Rest Period Active' 
+                                                : 'Volunteer Now'}
+                                        </span>
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
 
