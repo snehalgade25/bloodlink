@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 const Camps = () => {
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(sessionStorage.getItem('user'));
     const [camps, setCamps] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);

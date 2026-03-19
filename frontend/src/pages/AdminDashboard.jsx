@@ -20,7 +20,7 @@ import {
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(sessionStorage.getItem('user'));
 
     const [activeTab, setActiveTab] = useState('overview');
     const [stats, setStats] = useState(null);
@@ -81,7 +81,7 @@ const AdminDashboard = () => {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
         navigate('/login');
     };
 

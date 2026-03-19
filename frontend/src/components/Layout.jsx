@@ -17,7 +17,7 @@ import axios from 'axios';
 const Layout = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(sessionStorage.getItem('user'));
 
     const [donorInfo, setDonorInfo] = React.useState(null);
     const [lastRequestCount, setLastRequestCount] = React.useState(0);
@@ -69,7 +69,7 @@ const Layout = () => {
     }, [user?.username, lastRequestCount, donorInfo, location.pathname, navigate, user?.role]);
 
     const handleLogout = () => {
-        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
         navigate('/login');
     };
 

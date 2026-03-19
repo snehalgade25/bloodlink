@@ -26,7 +26,7 @@ const Login = () => {
                 return;
             }
 
-            localStorage.setItem('user', JSON.stringify(user));
+            sessionStorage.setItem('user', JSON.stringify(user));
             if (user.role === 'DONOR') navigate('/camps');
             else if (user.role === 'ADMIN') navigate('/admin-dashboard');
             else navigate('/dashboard');

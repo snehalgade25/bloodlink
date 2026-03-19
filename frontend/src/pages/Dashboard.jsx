@@ -27,7 +27,7 @@ const Dashboard = () => {
     const [registering, setRegistering] = useState(null);
     const [toast, setToast] = useState(null);
 
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(sessionStorage.getItem('user'));
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });

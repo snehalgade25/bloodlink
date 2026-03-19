@@ -6,7 +6,7 @@ const EmergencyRequests = () => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [donorInfo, setDonorInfo] = useState(null);
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(sessionStorage.getItem('user'));
 
     useEffect(() => {
         const fetchDonorAndRequests = async () => {

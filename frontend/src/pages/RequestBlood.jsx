@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Droplet, Phone, AlertCircle, CheckCircle, Loader2, MapPin, Hospital as HospitalIcon } from 'lucide-react';
 
 const RequestBlood = () => {
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(sessionStorage.getItem('user'));
     const [hospitalProfile, setHospitalProfile] = useState(null);
     const [profileLoading, setProfileLoading] = useState(true);
     const [profileError, setProfileError] = useState('');
