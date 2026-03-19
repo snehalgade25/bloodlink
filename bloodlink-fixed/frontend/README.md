@@ -1,2 +1,0 @@
-bloodlink frontend
-bloodlink backend
