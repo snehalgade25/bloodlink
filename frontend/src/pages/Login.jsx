@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
-import { Droplet, Lock, User as UserIcon, HeartHandshake, Hospital as HospitalIcon, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Droplet, Lock, User as UserIcon, HeartHandshake, Hospital as HospitalIcon, ArrowRight, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -9,6 +9,7 @@ const Login = () => {
     const [role, setRole] = useState('DONOR'); // Default to Donor
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
@@ -59,8 +60,8 @@ const Login = () => {
                         <button
                             onClick={() => { setRole('DONOR'); setError(''); }}
                             className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-xl font-bold transition-all duration-300 ${role === 'DONOR'
-                                    ? 'bg-white text-red-600 shadow-md transform scale-[1.02]'
-                                    : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-white text-red-600 shadow-md transform scale-[1.02] cursor-pointer'
+                                    : 'text-gray-500 hover:text-gray-700 cursor-pointer'
                                 }`}
                         >
                             <HeartHandshake className="w-5 h-5" />
@@ -69,8 +70,8 @@ const Login = () => {
                         <button
                             onClick={() => { setRole('HOSPITAL'); setError(''); }}
                             className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-xl font-bold transition-all duration-300 ${role === 'HOSPITAL'
-                                    ? 'bg-white text-blue-600 shadow-md transform scale-[1.02]'
-                                    : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-white text-blue-600 shadow-md transform scale-[1.02] cursor-pointer'
+                                    : 'text-gray-500 hover:text-gray-700 cursor-pointer'
                                 }`}
                         >
                             <HospitalIcon className="w-5 h-5" />
@@ -79,8 +80,8 @@ const Login = () => {
                         <button
                             onClick={() => { setRole('ADMIN'); setError(''); }}
                             className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-xl font-bold transition-all duration-300 ${role === 'ADMIN'
-                                    ? 'bg-white text-purple-600 shadow-md transform scale-[1.02]'
-                                    : 'text-gray-500 hover:text-gray-700'
+                                    ? 'bg-white text-purple-600 shadow-md transform scale-[1.02] cursor-pointer'
+                                    : 'text-gray-500 hover:text-gray-700 cursor-pointer'
                                 }`}
                         >
                             <ShieldCheck className="w-5 h-5" />
@@ -120,21 +121,28 @@ const Login = () => {
                                     <Lock className={`h-5 w-5 transition-colors ${role === 'DONOR' ? 'text-red-400' : role === 'ADMIN' ? 'text-purple-400' : 'text-blue-400'}`} />
                                 </div>
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="appearance-none block w-full pl-12 pr-4 py-4 border border-gray-200 rounded-2xl bg-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all font-medium"
+                                    className="appearance-none block w-full pl-12 pr-12 py-4 border border-gray-200 rounded-2xl bg-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all font-medium"
                                     style={{ '--tw-ring-color': role === 'DONOR' ? '#ef4444' : role === 'ADMIN' ? '#9333ea' : '#3b82f6' }}
                                     placeholder="••••••••"
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+                                >
+                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                </button>
                             </div>
                         </div>
 
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full flex items-center justify-center space-x-2 py-4 px-4 border border-transparent rounded-2xl shadow-xl text-white font-black text-lg transition-all transform hover:-translate-y-1 active:scale-95 ${role === 'DONOR' ? 'bg-red-600 hover:bg-red-700' : role === 'ADMIN' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'
+                            className={`w-full flex items-center justify-center space-x-2 py-4 px-4 border border-transparent rounded-2xl shadow-xl text-white font-black text-lg transition-all transform hover:-translate-y-1 active:scale-95 cursor-pointer ${role === 'DONOR' ? 'bg-red-600 hover:bg-red-700' : role === 'ADMIN' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-blue-600 hover:bg-blue-700'
                                 } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             {loading ? (
@@ -148,16 +156,18 @@ const Login = () => {
                         </button>
                     </form>
 
-                    <div className="mt-10 pt-8 border-t border-gray-100 text-center">
-                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">New to BloodLink?</p>
-                        <Link
-                            to="/register"
-                            className={`inline-flex items-center space-x-2 font-black text-lg underline decoration-2 underline-offset-4 transition-colors ${role === 'DONOR' ? 'text-red-600 hover:text-red-700' : role === 'ADMIN' ? 'text-purple-600 hover:text-purple-700' : 'text-blue-600 hover:text-blue-700'
-                                }`}
-                        >
-                            <span>Create an account</span>
-                        </Link>
-                    </div>
+                    {role !== 'ADMIN' && (
+                        <div className="mt-10 pt-8 border-t border-gray-100 text-center">
+                            <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">New to BloodLink?</p>
+                            <Link
+                                to="/register"
+                                className={`inline-flex items-center space-x-2 font-black text-lg underline decoration-2 underline-offset-4 transition-colors ${role === 'DONOR' ? 'text-red-600 hover:text-red-700' : role === 'ADMIN' ? 'text-purple-600 hover:text-purple-700' : 'text-blue-600 hover:text-blue-700'
+                                    }`}
+                            >
+                                <span>Create an account</span>
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

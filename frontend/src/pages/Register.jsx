@@ -127,18 +127,7 @@ const Register = () => {
                             <HospitalIcon className="w-5 h-5" />
                             <span>Hospital Portal</span>
                         </button>
-                        <button
-                            type="button"
-                            onClick={() => setRole('ADMIN')}
-                            className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-xl font-bold transition-all duration-300 ${
-                                formData.role === 'ADMIN'
-                                    ? 'bg-white text-purple-600 shadow-md transform scale-[1.02]'
-                                    : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                        >
-                            <ShieldCheck className="w-5 h-5" />
-                            <span>Admin Account</span>
-                        </button>
+
                     </div>
 
                     {error && (
@@ -270,34 +259,7 @@ const Register = () => {
                                 </div>
                             )}
 
-                            {/* ADMIN-specific */}
-                            {formData.role === 'ADMIN' && (
-                                <>
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-1">Admin Secret Key</label>
-                                        <div className="relative">
-                                            <ShieldCheck className="absolute left-3 top-3.5 h-5 w-5 text-purple-400" />
-                                            <input
-                                                name="adminKey"
-                                                type="password"
-                                                value={formData.adminKey}
-                                                onChange={handleChange}
-                                                className={inputClasses}
-                                                placeholder="Enter admin secret key"
-                                            />
-                                        </div>
-                                        <p className="mt-1.5 text-xs text-gray-400 font-medium">
-                                            Required to create an admin account.
-                                        </p>
-                                    </div>
-                                    <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl">
-                                        <p className="text-xs font-black text-purple-600 uppercase tracking-widest mb-1">Admin Access</p>
-                                        <p className="text-xs text-purple-500 font-medium">
-                                            Admin accounts have full access to manage users, donors, hospitals, and all system data.
-                                        </p>
-                                    </div>
-                                </>
-                            )}
+
 
                             <div className="pt-2">
                                 <button

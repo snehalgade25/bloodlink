@@ -10,3 +10,6 @@ frontend/dist/
 backend/dist/
 frontend/.env
 backend/.env
+
+# Admin Credentials
+admin_credentials.txt
