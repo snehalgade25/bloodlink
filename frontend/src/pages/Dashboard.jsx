@@ -35,6 +35,7 @@ const Dashboard = () => {
     const [requestsLoading, setRequestsLoading] = useState(true);
     const [matchingRequests, setMatchingRequests] = useState([]);
     const [volunteeringId, setVolunteeringId] = useState(null);
+    const [currentTime, setCurrentTime] = useState(new Date());
 
     const user = JSON.parse(localStorage.getItem('user'));
 
@@ -57,7 +58,11 @@ const Dashboard = () => {
 
         fetchStats();
         const interval = setInterval(fetchStats, 5000);
-        return () => clearInterval(interval);
+        const timeInterval = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => {
+            clearInterval(interval);
+            clearInterval(timeInterval);
+        };
     }, []);
 
     useEffect(() => {
@@ -140,6 +145,28 @@ const Dashboard = () => {
         } finally {
             setCampsLoading(false);
         }
+    };
+
+    const formatTimeAgo = (date) => {
+        const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+        let interval = seconds / 31536000;
+        if (interval > 1) return Math.floor(interval) + " years ago";
+        interval = seconds / 2592000;
+        if (interval > 1) return Math.floor(interval) + " months ago";
+        interval = seconds / 86400;
+        if (interval > 1) return Math.floor(interval) + " days ago";
+        interval = seconds / 3600;
+        if (interval > 1) return Math.floor(interval) + " hours ago";
+        interval = seconds / 60;
+        if (interval > 1) return Math.floor(interval) + " mins ago";
+        return "Just now";
+    };
+
+    const getGreeting = () => {
+        const hour = currentTime.getHours();
+        if (hour < 12) return "Good Morning";
+        if (hour < 17) return "Good Afternoon";
+        return "Good Evening";
     };
 
     const isRegistered = (camp) => camp.registeredDonors?.includes(user?.username);
@@ -228,6 +255,26 @@ const Dashboard = () => {
 
         return (
             <div className="space-y-8 animate-in fade-in duration-500">
+                {/* Time & Greetings Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <div>
+                        <h1 className="text-3xl font-black text-gray-800 tracking-tight">
+                            {getGreeting()}, <span className="text-red-600">{profile?.name || user.username}</span>
+                        </h1>
+                        <p className="text-gray-500 font-bold mt-1 uppercase text-xs tracking-widest flex items-center">
+                            <Clock className="w-3 h-3 mr-2" />
+                            Live Statistics Portal
+                        </p>
+                    </div>
+                    <div className="text-right">
+                        <div className="text-2xl font-black text-gray-800 tabular-nums">
+                            {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        </div>
+                        <div className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                            {currentTime.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
+                        </div>
+                    </div>
+                </div>
                 {/* Buffer Period Warning */}
                 {isBufferActive && (
                     <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-xl shadow-sm flex items-center justify-between">
@@ -261,7 +308,9 @@ const Dashboard = () => {
                                         <div className="bg-red-600 text-white p-2 rounded-xl">
                                             <Droplet className="w-5 h-5 fill-current" />
                                         </div>
-                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{new Date(request.createdAt).toLocaleDateString()}</span>
+                                        <span className="text-[10px] font-black text-red-600 bg-red-50 px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">
+                                            {formatTimeAgo(request.createdAt)}
+                                        </span>
                                     </div>
                                     <h3 className="font-black text-gray-800 text-lg mb-1">{request.hospitalName || 'Quick Broadcast'}</h3>
                                     <p className="text-gray-500 text-xs font-bold mb-4 flex items-center"><MapPin className="w-3 h-3 mr-1" /> {request.location || 'Thane'}</p>
@@ -558,6 +607,26 @@ const Dashboard = () => {
     // ── HOSPITAL DASHBOARD ────────────────────────────────────────────────────
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
+            {/* Time & Greetings Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                <div>
+                    <h1 className="text-3xl font-black text-gray-800 tracking-tight">
+                        {getGreeting()}, <span className="text-blue-600">{profile?.name || user.username}</span>
+                    </h1>
+                    <p className="text-gray-500 font-bold mt-1 uppercase text-xs tracking-widest flex items-center">
+                        <Clock className="w-3 h-3 mr-2" />
+                        Hospital Management Portal
+                    </p>
+                </div>
+                <div className="text-right">
+                    <div className="text-2xl font-black text-gray-800 tabular-nums">
+                        {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </div>
+                    <div className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                        {currentTime.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
+                    </div>
+                </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Link to="/stock"><StatCard icon={Users} label="Total Donors" value={stats?.totalDonors || 0} trend="Active" color="text-blue-600" bg="bg-blue-50" /></Link>
                 <Link to="/emergency-requests"><StatCard icon={Droplet} label="Requests" value={stats?.emergencyRequests || 0} trend="Urgent" color="text-red-600" bg="bg-red-50" /></Link>
@@ -611,8 +680,8 @@ const Dashboard = () => {
                                             <span className="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{request.bloodGroup}</span>
                                             <span className="text-sm font-bold text-gray-700">Request for {request.bloodGroup}</span>
                                         </div>
-                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                            {new Date(request.createdAt).toLocaleDateString()}
+                                        <span className="text-[10px] font-black text-red-600 bg-red-50 px-2 py-0.5 rounded-full uppercase tracking-widest">
+                                            {formatTimeAgo(request.createdAt)}
                                         </span>
                                     </div>
                                     <div className="divide-y divide-gray-50">
@@ -624,14 +693,17 @@ const Dashboard = () => {
                                                     </div>
                                                     <div>
                                                         <p className="font-black text-gray-800">@{volunteer.username}</p>
-                                                        <span className={`text-[10px] font-black uppercase tracking-widest ${
-                                                            volunteer.status === 'Pending' ? 'text-orange-500' :
-                                                            volunteer.status === 'Accepted' ? 'text-blue-500' :
-                                                            volunteer.status === 'Completed' ? 'text-green-500' :
-                                                            'text-gray-400'
-                                                        }`}>
-                                                            {volunteer.status}
-                                                        </span>
+                                                        <div className="flex items-center space-x-2">
+                                                            <span className={`text-[10px] font-black uppercase tracking-widest ${
+                                                                volunteer.status === 'Pending' ? 'text-orange-500' :
+                                                                volunteer.status === 'Accepted' ? 'text-blue-500' :
+                                                                volunteer.status === 'Completed' ? 'text-green-500' :
+                                                                'text-gray-400'
+                                                            }`}>
+                                                                {volunteer.status}
+                                                            </span>
+                                                            <span className="text-[9px] text-gray-400 font-bold">• {formatTimeAgo(volunteer.registeredAt)}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
