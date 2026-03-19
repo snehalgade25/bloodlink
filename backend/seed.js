@@ -72,8 +72,6 @@ const seedData = async () => {
         console.log('Database seeded successfully with Hospitals, Blood Banks, and Donors!');
         process.exit();
     } catch (err) {
-        //try and catch block
-
         console.error('Error seeding database:', err);
         process.exit(1);
     }

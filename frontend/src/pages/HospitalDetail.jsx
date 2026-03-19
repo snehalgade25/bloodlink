@@ -21,7 +21,14 @@ const HospitalDetail = () => {
     const [loading, setLoading] = useState(true);
     const [requests, setRequests] = useState([]);
     const [donorProfile, setDonorProfile] = useState(null);
+    const [volunteeringId, setVolunteeringId] = useState(null);
+    const [toast, setToast] = useState(null);
     const user = JSON.parse(localStorage.getItem('user'));
+    
+    const showToast = (msg, type = 'success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
 
     useEffect(() => {
@@ -54,19 +61,36 @@ const HospitalDetail = () => {
     };
 
     const handleVolunteer = async (requestId) => {
+        setVolunteeringId(requestId);
         try {
             await axios.post(`http://localhost:5000/api/request/${requestId}/volunteer`, {
                 username: user.username
             });
+            showToast('Volunteered successfully!');
             // Refresh to update status
             fetchHospital();
         } catch (err) {
-            alert(err.response?.data?.error || 'Failed to volunteer');
+            showToast(err.response?.data?.error || 'Failed to volunteer', 'error');
+        } finally {
+            setVolunteeringId(null);
         }
     };
 
     const isVolunteered = (request) => request.volunteers?.some(v => v.username === user?.username);
     const getVolunteerStatus = (request) => request.volunteers?.find(v => v.username === user?.username)?.status;
+
+    // Calculate rest period
+    let isBufferActive = false;
+    let daysLeft = 0;
+    if (donorProfile?.donations?.length > 0) {
+        const sorted = [...donorProfile.donations].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const lastDate = new Date(sorted[0].date);
+        const bufferEndDate = new Date(lastDate.getTime() + 90 * 24 * 60 * 60 * 1000);
+        if (new Date() < bufferEndDate) {
+            isBufferActive = true;
+            daysLeft = Math.ceil((bufferEndDate - new Date()) / (1000 * 60 * 60 * 24));
+        }
+    }
 
 
     if (loading) return (
@@ -173,19 +197,33 @@ const HospitalDetail = () => {
                                         
                                         {user?.role === 'DONOR' ? (
                                             <button
-                                                disabled={isVolunteered(request)}
+                                                disabled={isVolunteered(request) || isBufferActive || volunteeringId === request._id}
                                                 onClick={() => handleVolunteer(request._id)}
+                                                title={isBufferActive ? `Rest period active (${daysLeft} days remaining)` : ''}
                                                 className={`w-full py-3 rounded-xl font-black text-xs flex items-center justify-center space-x-2 transition-all active:scale-95 ${
                                                     isVolunteered(request)
                                                         ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                                        : isBufferActive
+                                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
                                                         : 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-100'
                                                 }`}
                                             >
-                                                {isVolunteered(request) ? (
-                                                    <><CheckCircle className="w-4 h-4" /><span>Volunteered ({getVolunteerStatus(request)})</span></>
+                                                {volunteeringId === request._id ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : isVolunteered(request) ? (
+                                                    <CheckCircle className="w-4 h-4" />
                                                 ) : (
-                                                    <><HeartHandshake className="w-4 h-4" /><span>Volunteer Now</span></>
+                                                    <HeartHandshake className="w-4 h-4" />
                                                 )}
+                                                <span>
+                                                    {volunteeringId === request._id 
+                                                        ? 'Processing...' 
+                                                        : isVolunteered(request) 
+                                                        ? `Volunteered (${getVolunteerStatus(request)})` 
+                                                        : isBufferActive 
+                                                        ? 'Rest Period Active' 
+                                                        : 'Volunteer Now'}
+                                                </span>
                                             </button>
                                         ) : (
                                             <div className="text-xs font-black text-red-500 uppercase tracking-tighter text-center bg-red-50 py-2 rounded-lg">
@@ -199,6 +237,12 @@ const HospitalDetail = () => {
                     )}
                 </div>
             </div>
+            {/* Toast */}
+            {toast && (
+                <div className={`fixed bottom-8 right-8 z-50 px-6 py-4 rounded-2xl shadow-xl text-white font-black text-sm animate-in slide-in-from-right-4 duration-300 ${toast.type === 'error' ? 'bg-red-600' : 'bg-emerald-600'}`}>
+                    {toast.msg}
+                </div>
+            )}
         </div>
     );
 };

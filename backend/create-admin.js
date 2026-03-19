@@ -1,9 +1,9 @@
-const dns = require('dns');
-dns.setServers(['8.8.8.8']);
-/*
+/**
  * BloodLink - Create Admin User Script
  * Run this once to create an admin account:
  *   node create-admin.js
+ *
+ * Default credentials: admin / admin123
  */
 
 const mongoose = require('mongoose');
@@ -18,20 +18,18 @@ const UserSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', UserSchema);
 
-const ADMIN_USERNAME = 'admin_thane';
-const ADMIN_PASSWORD = 'BloodLink@2024Thane';
+const ADMIN_USERNAME = 'admin';
+const ADMIN_PASSWORD = 'admin123';
 const ADMIN_EMAIL = 'admin@bloodlink.org';
 const ADMIN_PHONE = '0000000000';
 
 async function createAdmin() {
     try {
-        console.log('Attempting to connect to MongoDB...');
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('Connected to MongoDB');
 
         const existing = await User.findOne({ username: ADMIN_USERNAME });
         if (existing) {
-            console.log(`Found existing user: ${existing.username} (${existing.role})`);
             if (existing.role !== 'ADMIN') {
                 existing.role = 'ADMIN';
                 await existing.save();
@@ -40,7 +38,6 @@ async function createAdmin() {
                 console.log(`Admin user "${ADMIN_USERNAME}" already exists.`);
             }
         } else {
-            console.log('User not found, creating new admin...');
             await User.create({
                 username: ADMIN_USERNAME,
                 password: ADMIN_PASSWORD,
@@ -57,10 +54,7 @@ async function createAdmin() {
     } catch (err) {
         console.error('Error creating admin:', err.message);
     } finally {
-        if (mongoose.connection.readyState !== 0) {
-            await mongoose.disconnect();
-            console.log('Disconnected from MongoDB');
-        }
+        mongoose.disconnect();
     }
 }
 

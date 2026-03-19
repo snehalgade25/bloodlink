@@ -3,7 +3,7 @@ import axios from 'axios';
 import { HeartHandshake, User, Phone, Droplet, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 
 const Donate = () => {
-    const user = JSON.parse(sessionStorage.getItem('user'));
+    const user = JSON.parse(localStorage.getItem('user'));
     const [donorData, setDonorData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);

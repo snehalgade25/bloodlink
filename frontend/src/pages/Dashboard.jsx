@@ -34,8 +34,9 @@ const Dashboard = () => {
     const [myRequests, setMyRequests] = useState([]);
     const [requestsLoading, setRequestsLoading] = useState(true);
     const [matchingRequests, setMatchingRequests] = useState([]);
+    const [volunteeringId, setVolunteeringId] = useState(null);
 
-    const user = JSON.parse(sessionStorage.getItem('user'));
+    const user = JSON.parse(localStorage.getItem('user'));
 
     const showToast = (msg, type = 'success') => {
         setToast({ msg, type });
@@ -112,6 +113,7 @@ const Dashboard = () => {
     };
 
     const handleVolunteer = async (requestId) => {
+        setVolunteeringId(requestId);
         try {
             await axios.post(`http://localhost:5000/api/request/${requestId}/volunteer`, {
                 username: user.username
@@ -120,6 +122,8 @@ const Dashboard = () => {
             await fetchProfile(); // Refresh to update status
         } catch (err) {
             showToast(err.response?.data?.error || 'Failed to volunteer', 'error');
+        } finally {
+            setVolunteeringId(null);
         }
     };
 
@@ -262,27 +266,33 @@ const Dashboard = () => {
                                     <h3 className="font-black text-gray-800 text-lg mb-1">{request.hospitalName || 'Quick Broadcast'}</h3>
                                     <p className="text-gray-500 text-xs font-bold mb-4 flex items-center"><MapPin className="w-3 h-3 mr-1" /> {request.location || 'Thane'}</p>
                                     
-                                    <button
-                                        disabled={isVolunteered(request) || isBufferActive}
-                                        onClick={() => handleVolunteer(request._id)}
-                                        title={isBufferActive ? `Rest period active (${daysLeft} days remaining)` : ''}
-                                        className={`w-full py-3 rounded-xl font-black text-xs flex items-center justify-center space-x-2 transition-all active:scale-95 ${
-                                            isVolunteered(request)
-                                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                                                : isBufferActive
-                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
-                                                : 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-100'
-                                        }`}
-                                    >
-                                        <HeartHandshake className="w-4 h-4" />
-                                        <span>
-                                            {isVolunteered(request) 
-                                                ? `Volunteered (${getVolunteerStatus(request)})` 
-                                                : isBufferActive 
-                                                ? 'Rest Period Active' 
-                                                : 'Volunteer Now'}
-                                        </span>
-                                    </button>
+                                        <button
+                                            disabled={isVolunteered(request) || isBufferActive || volunteeringId === request._id}
+                                            onClick={() => handleVolunteer(request._id)}
+                                            title={isBufferActive ? `Rest period active (${daysLeft} days remaining)` : ''}
+                                            className={`w-full py-3 rounded-xl font-black text-xs flex items-center justify-center space-x-2 transition-all active:scale-95 ${
+                                                isVolunteered(request)
+                                                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                                    : isBufferActive
+                                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                                                    : 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-100'
+                                            } ${volunteeringId === request._id ? 'opacity-70' : ''}`}
+                                        >
+                                            {volunteeringId === request._id ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <HeartHandshake className="w-4 h-4" />
+                                            )}
+                                            <span>
+                                                {volunteeringId === request._id
+                                                    ? 'Processing...'
+                                                    : isVolunteered(request) 
+                                                    ? `Volunteered (${getVolunteerStatus(request)})` 
+                                                    : isBufferActive 
+                                                    ? 'Rest Period Active' 
+                                                    : 'Volunteer Now'}
+                                            </span>
+                                        </button>
                                 </div>
                             ))}
                         </div>

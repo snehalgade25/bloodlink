@@ -6,7 +6,8 @@ const EmergencyRequests = () => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [donorInfo, setDonorInfo] = useState(null);
-    const user = JSON.parse(sessionStorage.getItem('user'));
+    const [volunteeringId, setVolunteeringId] = useState(null);
+    const user = JSON.parse(localStorage.getItem('user'));
 
     useEffect(() => {
         const fetchDonorAndRequests = async () => {
@@ -37,7 +38,7 @@ const EmergencyRequests = () => {
     let daysLeft = 0;
 
     if (donorInfo && donorInfo.donations && donorInfo.donations.length > 0) {
-        const sorted = [...donorInfo.donations].sort((a,b) => new Date(b.date) - new Date(a.date));
+        const sorted = [...donorInfo.donations].sort((a, b) => new Date(b.date) - new Date(a.date));
         const lastDate = new Date(sorted[0].date);
         bufferEndDate = new Date(lastDate.getTime() + 90 * 24 * 60 * 60 * 1000);
         if (new Date() < bufferEndDate) {
@@ -47,18 +48,21 @@ const EmergencyRequests = () => {
     }
 
     const handleVolunteer = async (requestId) => {
+        setVolunteeringId(requestId);
         try {
             await axios.post(`http://localhost:5000/api/request/${requestId}/volunteer`, {
                 username: user.username
             });
             // Update local state to reflect volunteering
-            setRequests(prev => prev.map(r => 
-                r._id === requestId 
+            setRequests(prev => prev.map(r =>
+                r._id === requestId
                     ? { ...r, volunteers: [...(r.volunteers || []), { username: user.username, status: 'Pending' }] }
                     : r
             ));
         } catch (err) {
             alert(err.response?.data?.error || 'Failed to volunteer');
+        } finally {
+            setVolunteeringId(null);
         }
     };
 
@@ -165,24 +169,29 @@ const EmergencyRequests = () => {
                                         </button>
 
                                         <button
-                                            disabled={isVolunteered(request) || isBufferActive}
+                                            disabled={isVolunteered(request) || isBufferActive || volunteeringId === request._id}
                                             onClick={() => handleVolunteer(request._id)}
                                             title={isBufferActive ? `Rest period active (${daysLeft} days remaining)` : ''}
-                                            className={`flex-1 px-8 py-3 font-black rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 active:scale-95 ${
-                                                isVolunteered(request)
+                                            className={`flex-1 px-8 py-3 font-black rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 active:scale-95 ${isVolunteered(request)
                                                     ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                                                     : isBufferActive
-                                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200 shadow-none'
-                                                    : 'bg-red-600 text-white hover:bg-red-700 shadow-red-100'
-                                            }`}
+                                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200 shadow-none'
+                                                        : 'bg-red-600 text-white hover:bg-red-700 shadow-red-100'
+                                                }`}
                                         >
-                                            <Heart className={`w-4 h-4 ${isVolunteered(request) ? 'fill-current' : ''}`} />
+                                            {volunteeringId === request._id ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <Heart className={`w-4 h-4 ${isVolunteered(request) ? 'fill-current' : ''}`} />
+                                            )}
                                             <span>
-                                                {isVolunteered(request) 
-                                                    ? `Volunteered (${getVolunteerStatus(request)})` 
-                                                    : isBufferActive
-                                                    ? 'Rest Period Active'
-                                                    : 'Volunteer to Donate'
+                                                {volunteeringId === request._id
+                                                    ? 'Processing...'
+                                                    : isVolunteered(request)
+                                                        ? `Volunteered (${getVolunteerStatus(request)})`
+                                                        : isBufferActive
+                                                            ? 'Rest Period Active'
+                                                            : 'Volunteer to Donate'
                                                 }
                                             </span>
                                         </button>
